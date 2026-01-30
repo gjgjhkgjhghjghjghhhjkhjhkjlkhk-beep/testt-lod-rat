@@ -1,12 +1,11 @@
 --==================================================
--- vkojii int v2 FINAL (0.1s REFRESH)
+-- vkojii int v2 (FINAL FULL)
 --==================================================
 
 -- SERVICES
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 
 local LP = Players.LocalPlayer
 local PlayerGui = LP:WaitForChild("PlayerGui")
@@ -22,22 +21,18 @@ local aimbotEnabled = false
 local flyEnabled = false
 local noclipEnabled = false
 local speedEnabled = false
-local spinEnabled = false
-local rapidEnabled = false
 
 local aimPart = "Head"
 local MENU_KEY = Enum.KeyCode.Insert
 local AIM_KEY = Enum.UserInputType.MouseButton2
 
-local speedValue = 30
+local speedValue = 100
 local normalSpeed = 16
-local spinSpeed = 12
 
 local flyBV, flyBG
-local flyKeys = {W=false,A=false,S=false,D=false,Space=false,Shift=false}
-
 local highlights = {}
 local nametags = {}
+local connections = {}
 
 --==================================================
 -- HELPERS
@@ -76,12 +71,16 @@ local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0,560,0,380)
 Main.Position = UDim2.new(0.2,0,0.25,0)
 Main.BackgroundColor3 = Color3.fromRGB(28,28,36)
+Main.BorderSizePixel = 0
 makeCorner(Main,14)
 
--- TITLE BAR
+--==================================================
+-- TITLE BAR (DRAG)
+--==================================================
 local TitleBar = Instance.new("Frame", Main)
 TitleBar.Size = UDim2.new(1,0,0,46)
 TitleBar.BackgroundColor3 = Color3.fromRGB(35,35,48)
+TitleBar.BorderSizePixel = 0
 
 local Title = Instance.new("TextLabel", TitleBar)
 Title.Size = UDim2.new(1,-80,1,0)
@@ -101,26 +100,27 @@ Close.Font = Enum.Font.GothamBold
 Close.TextSize = 14
 Close.TextColor3 = Color3.new(1,1,1)
 Close.BackgroundColor3 = Color3.fromRGB(200,70,70)
+Close.BorderSizePixel = 0
 makeCorner(Close,8)
 
--- DRAG
+-- DRAG LOGIC
 TitleBar.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then
-		dragging=true
-		dragStart=i.Position
-		startPos=Main.Position
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = i.Position
+		startPos = Main.Position
 	end
 end)
 
 UIS.InputChanged:Connect(function(i)
-	if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then
-		local d=i.Position-dragStart
-		Main.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
+	if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local d = i.Position - dragStart
+		Main.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
 	end
 end)
 
 UIS.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end
 end)
 
 --==================================================
@@ -130,45 +130,48 @@ local Sidebar = Instance.new("Frame", Main)
 Sidebar.Position = UDim2.new(0,0,0,46)
 Sidebar.Size = UDim2.new(0,140,1,-46)
 Sidebar.BackgroundColor3 = Color3.fromRGB(32,32,44)
+Sidebar.BorderSizePixel = 0
 
 local function sideBtn(text,y)
-	local b=Instance.new("TextButton",Sidebar)
-	b.Size=UDim2.new(1,-20,0,40)
-	b.Position=UDim2.new(0,10,0,y)
-	b.Text=text
-	b.Font=Enum.Font.GothamBold
-	b.TextSize=14
-	b.TextColor3=Color3.new(1,1,1)
-	b.BackgroundColor3=Color3.fromRGB(65,65,90)
+	local b = Instance.new("TextButton", Sidebar)
+	b.Size = UDim2.new(1,-20,0,40)
+	b.Position = UDim2.new(0,10,0,y)
+	b.Text = text
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 14
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BackgroundColor3 = Color3.fromRGB(65,65,90)
+	b.BorderSizePixel = 0
 	makeCorner(b,8)
 	return b
 end
 
-local btnAIM=sideBtn("AIMBOT",20)
-local btnESP=sideBtn("ESP",70)
-local btnTP =sideBtn("TP",120)
-local btnFUN=sideBtn("FUN",170)
+local btnAIM = sideBtn("AIMBOT",20)
+local btnESP = sideBtn("ESP",70)
+local btnTP  = sideBtn("TP",120)
+local btnFUN = sideBtn("FUN",170)
 
 --==================================================
 -- PAGES
 --==================================================
-local Pages=Instance.new("Frame",Main)
-Pages.Position=UDim2.new(0,140,0,46)
-Pages.Size=UDim2.new(1,-140,1,-46)
-Pages.BackgroundTransparency=1
+local Pages = Instance.new("Frame", Main)
+Pages.Position = UDim2.new(0,140,0,46)
+Pages.Size = UDim2.new(1,-140,1,-46)
+Pages.BackgroundTransparency = 1
 
 local function newPage()
-	local f=Instance.new("Frame",Pages)
-	f.Size=UDim2.new(1,0,1,0)
-	f.BackgroundTransparency=1
+	local f = Instance.new("Frame", Pages)
+	f.Size = UDim2.new(1,0,1,0)
+	f.BackgroundTransparency = 1
 	return f
 end
 
-local PageAIM=newPage()
-local PageESP=newPage()
-local PageTP=newPage()
-local PageFUN=newPage()
+local PageAIM = newPage()
+local PageESP = newPage()
+local PageTP  = newPage()
+local PageFUN = newPage()
 
+PageAIM.Visible=false
 PageESP.Visible=false
 PageTP.Visible=false
 PageFUN.Visible=false
@@ -181,62 +184,68 @@ local function switchPage(p)
 	p.Visible=true
 end
 
-btnAIM.MouseButton1Click:Connect(function()switchPage(PageAIM)end)
-btnESP.MouseButton1Click:Connect(function()switchPage(PageESP)end)
-btnTP.MouseButton1Click:Connect(function()switchPage(PageTP)end)
-btnFUN.MouseButton1Click:Connect(function()switchPage(PageFUN)end)
+btnAIM.MouseButton1Click:Connect(function() switchPage(PageAIM) end)
+btnESP.MouseButton1Click:Connect(function() switchPage(PageESP) end)
+btnTP.MouseButton1Click:Connect(function() switchPage(PageTP) end)
+btnFUN.MouseButton1Click:Connect(function() switchPage(PageFUN) end)
 
 --==================================================
--- ESP (0.1s REFRESH)
+-- ESP (NameTag + Highlight) - REFRESH 0.1s
 --==================================================
-local espBtn=makeButton(PageESP,"ESP : OFF",20)
+local espBtn = makeButton(PageESP,"ESP : OFF",20)
 espBtn.MouseButton1Click:Connect(function()
-	espEnabled=not espEnabled
-	espBtn.Text=espEnabled and "ESP : ON" or "ESP : OFF"
+	espEnabled = not espEnabled
+	espBtn.Text = espEnabled and "ESP : ON" or "ESP : OFF"
+	if not espEnabled then
+		for _,v in pairs(highlights) do safeDestroy(v) end
+		for _,v in pairs(nametags) do safeDestroy(v) end
+		highlights, nametags = {}, {}
+	end
 end)
 
-task.spawn(function()
-	while task.wait(0.1) do
-		if not espEnabled then continue end
-		for _,p in pairs(Players:GetPlayers()) do
-			if p~=LP and p.Character and p.Character:FindFirstChild("Head") then
-				if not highlights[p] then
-					local h=Instance.new("Highlight",p.Character)
-					h.FillColor=Color3.fromRGB(255,255,0)
-					h.OutlineColor=Color3.fromRGB(255,170,0)
-					h.FillTransparency=0.6
-					highlights[p]=h
-				end
-				if not nametags[p] then
-					local bb=Instance.new("BillboardGui",p.Character)
-					bb.Adornee=p.Character.Head
-					bb.Size=UDim2.new(0,120,0,32)
-					bb.StudsOffset=Vector3.new(0,2.5,0)
-					bb.AlwaysOnTop=true
-					local t=Instance.new("TextLabel",bb)
-					t.Size=UDim2.new(1,0,1,0)
-					t.BackgroundTransparency=1
-					t.Text=p.Name
-					t.Font=Enum.Font.GothamBold
-					t.TextScaled=true
-					t.TextColor3=Color3.fromRGB(255,255,0)
-					nametags[p]=bb
-				end
+connections.esp = RunService.Heartbeat:Connect(function()
+	if not espEnabled then return end
+	for _,p in pairs(Players:GetPlayers()) do
+		if p ~= LP and p.Character and p.Character:FindFirstChild("Head") then
+			if not highlights[p] then
+				local h = Instance.new("Highlight", p.Character)
+				h.FillColor = Color3.fromRGB(255,255,0)
+				h.OutlineColor = Color3.fromRGB(255,170,0)
+				h.FillTransparency = 0.6
+				highlights[p] = h
 			end
+			if not nametags[p] then
+				local bb = Instance.new("BillboardGui", p.Character)
+				bb.Adornee = p.Character.Head
+				bb.Size = UDim2.new(0,120,0,32)
+				bb.StudsOffset = Vector3.new(0,2.5,0)
+				bb.AlwaysOnTop = true
+				local t = Instance.new("TextLabel", bb)
+				t.Size = UDim2.new(1,0,1,0)
+				t.BackgroundTransparency = 1
+				t.Text = p.Name
+				t.Font = Enum.Font.GothamBold
+				t.TextScaled = true
+				t.TextColor3 = Color3.fromRGB(255,255,0)
+				nametags[p] = bb
+			end
+		else
+			if highlights[p] then safeDestroy(highlights[p]) highlights[p]=nil end
+			if nametags[p] then safeDestroy(nametags[p]) nametags[p]=nil end
 		end
 	end
 end)
 
 --==================================================
--- AIMBOT
+-- AIMBOT (LEGIT)
 --==================================================
-local aimBtn=makeButton(PageAIM,"AIMBOT : OFF",20)
+local aimBtn = makeButton(PageAIM,"AIMBOT : OFF",20)
 aimBtn.MouseButton1Click:Connect(function()
-	aimbotEnabled=not aimbotEnabled
-	aimBtn.Text=aimbotEnabled and "AIMBOT : ON" or "AIMBOT : OFF"
+	aimbotEnabled = not aimbotEnabled
+	aimBtn.Text = aimbotEnabled and "AIMBOT : ON" or "AIMBOT : OFF"
 end)
 
-local partBtn=makeButton(PageAIM,"AIM PART : HEAD",70)
+local partBtn = makeButton(PageAIM,"AIM PART : HEAD",70)
 partBtn.MouseButton1Click:Connect(function()
 	if aimPart=="Head" then
 		aimPart="HumanoidRootPart"
@@ -247,41 +256,85 @@ partBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
-RunService.RenderStepped:Connect(function()
-	if aimbotEnabled and UIS:IsMouseButtonPressed(AIM_KEY) then
-		local best,dist=nil,math.huge
-		for _,p in pairs(Players:GetPlayers()) do
-			if p~=LP and p.Character and p.Character:FindFirstChild(aimPart) then
-				local pos,on=Camera:WorldToViewportPoint(p.Character[aimPart].Position)
-				if on then
-					local d=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
-					if d<dist and d<250 then dist=d best=p end
-				end
+local function getClosest()
+	local best,dist=nil,math.huge
+	for _,p in pairs(Players:GetPlayers()) do
+		if p~=LP and p.Character and p.Character:FindFirstChild(aimPart) then
+			local pos,on=Camera:WorldToViewportPoint(p.Character[aimPart].Position)
+			if on then
+				local d=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
+				if d<dist and d<250 then dist=d best=p end
 			end
 		end
-		if best then
-			Camera.CFrame=Camera.CFrame:Lerp(
-				CFrame.new(Camera.CFrame.Position,best.Character[aimPart].Position),0.15)
+	end
+	return best
+end
+
+connections.aim = RunService.RenderStepped:Connect(function()
+	if aimbotEnabled and UIS:IsMouseButtonPressed(AIM_KEY) then
+		local t = getClosest()
+		if t then
+			Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position,t.Character[aimPart].Position),0.15)
 		end
 	end
 end)
 
 --==================================================
--- FUN (0.1s LOGIC SAFE)
+-- TELEPORT PAGE
 --==================================================
-local flyBtn   = makeButton(PageFUN,"FLY : OFF",20)
-local speedBtn = makeButton(PageFUN,"SPEED : OFF",70)
-local noclipBtn= makeButton(PageFUN,"NOCLIP : OFF",120)
-local killBtn  = makeButton(PageFUN,"KILL ALL",170)
-local rapidBtn = makeButton(PageFUN,"RAPID FIRE : OFF",220)
-local unloadBtn= makeButton(PageFUN,"UNLOAD",290)
+local list = Instance.new("ScrollingFrame",PageTP)
+list.Size=UDim2.new(1,-40,1,-40)
+list.Position=UDim2.new(0,20,0,20)
+list.CanvasSize=UDim2.new()
+list.ScrollBarImageTransparency=0.3
+list.BackgroundTransparency=1
 
--- Fly
+local layout = Instance.new("UIListLayout",list)
+layout.Padding = UDim.new(0,8)
+
+local function refreshTP()
+	for _,c in pairs(list:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+	for _,p in pairs(Players:GetPlayers()) do
+		if p~=LP then
+			local b=Instance.new("TextButton",list)
+			b.Size=UDim2.new(1,0,0,36)
+			b.Text=p.Name
+			b.Font=Enum.Font.GothamBold
+			b.TextSize=14
+			b.TextColor3=Color3.new(1,1,1)
+			b.BackgroundColor3=Color3.fromRGB(60,60,80)
+			makeCorner(b,8)
+			b.MouseButton1Click:Connect(function()
+				if LP.Character and p.Character then
+					LP.Character.HumanoidRootPart.CFrame=p.Character.HumanoidRootPart.CFrame*CFrame.new(0,0,-3)
+				end
+			end)
+		end
+	end
+	task.wait()
+	list.CanvasSize=UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+10)
+end
+refreshTP()
+Players.PlayerAdded:Connect(refreshTP)
+Players.PlayerRemoving:Connect(refreshTP)
+
+--==================================================
+-- FUN PAGE
+--==================================================
+local flyBtn=makeButton(PageFUN,"FLY : OFF",20)
+local speedBtn=makeButton(PageFUN,"SPEED : OFF",70)
+local noclipBtn=makeButton(PageFUN,"NOCLIP : OFF",120)
+local killBtn=makeButton(PageFUN,"KILL ALL",170)
+local unloadBtn=makeButton(PageFUN,"UNLOAD",220)
+
+-- FLY LOGIC
+local flyKeys={W=false,A=false,S=false,D=false,Space=false,Shift=false}
 flyBtn.MouseButton1Click:Connect(function()
-	flyEnabled=not flyEnabled
-	flyBtn.Text=flyEnabled and "FLY : ON" or "FLY : OFF"
-	local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-	if flyEnabled and hrp then
+	flyEnabled = not flyEnabled
+	flyBtn.Text = flyEnabled and "FLY : ON" or "FLY : OFF"
+	local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	if flyEnabled then
 		flyBV=Instance.new("BodyVelocity",hrp)
 		flyBV.MaxForce=Vector3.new(1e9,1e9,1e9)
 		flyBG=Instance.new("BodyGyro",hrp)
@@ -296,57 +349,36 @@ UIS.InputBegan:Connect(function(i,gp)
 	if gp then return end
 	if flyKeys[i.KeyCode.Name]~=nil then flyKeys[i.KeyCode.Name]=true end
 end)
-
 UIS.InputEnded:Connect(function(i)
 	if flyKeys[i.KeyCode.Name]~=nil then flyKeys[i.KeyCode.Name]=false end
 end)
 
--- 0.1s FUN LOOP
-task.spawn(function()
-	while task.wait(0.1) do
-		-- Fly
-		if flyEnabled and flyBV and flyBG then
-			local dir=Vector3.zero
-			if flyKeys.W then dir+=Camera.CFrame.LookVector end
-			if flyKeys.S then dir-=Camera.CFrame.LookVector end
-			if flyKeys.A then dir-=Camera.CFrame.RightVector end
-			if flyKeys.D then dir+=Camera.CFrame.RightVector end
-			if flyKeys.Space then dir+=Vector3.new(0,1,0) end
-			if flyKeys.Shift then dir-=Vector3.new(0,1,0) end
-			flyBV.Velocity = dir.Magnitude>0 and dir.Unit*speedValue or Vector3.zero
-			flyBG.CFrame=Camera.CFrame
-		end
-
-		
-
-		-- Rapid Fire
-		if rapidEnabled then
-			VirtualUser:Button1Down(Vector2.zero,Camera.CFrame)
-			task.wait(0.02)
-			VirtualUser:Button1Up(Vector2.zero,Camera.CFrame)
-		end
+RunService.RenderStepped:Connect(function()
+	if flyEnabled and flyBV and flyBG then
+		local dir=Vector3.zero
+		if flyKeys.W then dir+=Camera.CFrame.LookVector end
+		if flyKeys.S then dir-=Camera.CFrame.LookVector end
+		if flyKeys.A then dir-=Camera.CFrame.RightVector end
+		if flyKeys.D then dir+=Camera.CFrame.RightVector end
+		if flyKeys.Space then dir+=Vector3.new(0,1,0) end
+		if flyKeys.Shift then dir-=Vector3.new(0,1,0) end
+		flyBV.Velocity = dir.Magnitude>0 and dir.Unit*speedValue or Vector3.zero
+		flyBG.CFrame = Camera.CFrame
 	end
 end)
 
-
-
-rapidBtn.MouseButton1Click:Connect(function()
-	rapidEnabled=not rapidEnabled
-	rapidBtn.Text=rapidEnabled and "RAPID FIRE : ON" or "RAPID FIRE : OFF"
-end)
-
--- Speed
+-- SPEED
 speedBtn.MouseButton1Click:Connect(function()
-	speedEnabled=not speedEnabled
-	speedBtn.Text=speedEnabled and "SPEED : ON" or "SPEED : OFF"
-	local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-	if hum then hum.WalkSpeed=speedEnabled and speedValue or normalSpeed end
+	speedEnabled = not speedEnabled
+	speedBtn.Text = speedEnabled and "SPEED : ON" or "SPEED : OFF"
+	local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if hum then hum.WalkSpeed = speedEnabled and speedValue or normalSpeed end
 end)
 
--- Noclip
+-- NOCLIP
 noclipBtn.MouseButton1Click:Connect(function()
-	noclipEnabled=not noclipEnabled
-	noclipBtn.Text=noclipEnabled and "NOCLIP : ON" or "NOCLIP : OFF"
+	noclipEnabled = not noclipEnabled
+	noclipBtn.Text = noclipEnabled and "NOCLIP : ON" or "NOCLIP : OFF"
 end)
 
 RunService.Stepped:Connect(function()
@@ -357,7 +389,7 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
--- Kill All
+-- KILL ALL
 killBtn.MouseButton1Click:Connect(function()
 	for _,p in pairs(Players:GetPlayers()) do
 		if p~=LP and p.Character then
@@ -367,8 +399,9 @@ killBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Unload
+-- UNLOAD
 unloadBtn.MouseButton1Click:Connect(function()
+	for _,c in pairs(connections) do pcall(function() c:Disconnect() end) end
 	safeDestroy(ScreenGui)
 end)
 
@@ -376,8 +409,8 @@ end)
 UIS.InputBegan:Connect(function(i,gp)
 	if gp then return end
 	if i.KeyCode==MENU_KEY then
-		guiOpen=not guiOpen
-		ScreenGui.Enabled=guiOpen
+		guiOpen = not guiOpen
+		ScreenGui.Enabled = guiOpen
 	end
 end)
 
@@ -385,4 +418,4 @@ Close.MouseButton1Click:Connect(function()
 	ScreenGui.Enabled=false
 end)
 
-print("vkojii int v2 FINAL LOADED")
+print("vkojii int v2 loaded ✅")
