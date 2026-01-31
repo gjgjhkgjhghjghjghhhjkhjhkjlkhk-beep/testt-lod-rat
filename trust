@@ -1,5 +1,5 @@
 --==================================================
--- vkojii int v2 (FINAL FULL)
+-- vkojii int v2 (FINAL FULL FIXED)
 --==================================================
 
 -- SERVICES
@@ -26,7 +26,7 @@ local aimPart = "Head"
 local MENU_KEY = Enum.KeyCode.Insert
 local AIM_KEY = Enum.UserInputType.MouseButton2
 
-local speedValue = 100
+local speedValue = 200
 local normalSpeed = 16
 
 local flyBV, flyBG
@@ -190,16 +190,32 @@ btnTP.MouseButton1Click:Connect(function() switchPage(PageTP) end)
 btnFUN.MouseButton1Click:Connect(function() switchPage(PageFUN) end)
 
 --==================================================
--- ESP (NameTag + Highlight) - REFRESH 0.1s
+-- ESP (NameTag + Highlight)
 --==================================================
 local espBtn = makeButton(PageESP,"ESP : OFF",20)
-espBtn.MouseButton1Click:Connect(function()
+highlights = {}
+nametags = {}
+
+local function toggleESP()
 	espEnabled = not espEnabled
 	espBtn.Text = espEnabled and "ESP : ON" or "ESP : OFF"
 	if not espEnabled then
 		for _,v in pairs(highlights) do safeDestroy(v) end
 		for _,v in pairs(nametags) do safeDestroy(v) end
 		highlights, nametags = {}, {}
+	end
+end
+
+-- Button
+espBtn.MouseButton1Click:Connect(toggleESP)
+
+-- Taste L
+UIS.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == Enum.KeyCode.L then
+			toggleESP()
+		end
 	end
 end)
 
@@ -208,18 +224,20 @@ connections.esp = RunService.Heartbeat:Connect(function()
 	for _,p in pairs(Players:GetPlayers()) do
 		if p ~= LP and p.Character and p.Character:FindFirstChild("Head") then
 			if not highlights[p] then
-				local h = Instance.new("Highlight", p.Character)
+				local h = Instance.new("Highlight")
 				h.FillColor = Color3.fromRGB(255,255,0)
 				h.OutlineColor = Color3.fromRGB(255,170,0)
 				h.FillTransparency = 0.6
+				h.Parent = p.Character
 				highlights[p] = h
 			end
 			if not nametags[p] then
-				local bb = Instance.new("BillboardGui", p.Character)
+				local bb = Instance.new("BillboardGui")
 				bb.Adornee = p.Character.Head
 				bb.Size = UDim2.new(0,120,0,32)
 				bb.StudsOffset = Vector3.new(0,2.5,0)
 				bb.AlwaysOnTop = true
+				bb.Parent = p.Character
 				local t = Instance.new("TextLabel", bb)
 				t.Size = UDim2.new(1,0,1,0)
 				t.BackgroundTransparency = 1
@@ -327,30 +345,40 @@ local noclipBtn=makeButton(PageFUN,"NOCLIP : OFF",120)
 local killBtn=makeButton(PageFUN,"KILL ALL",170)
 local unloadBtn=makeButton(PageFUN,"UNLOAD",220)
 
--- FLY LOGIC
+-- FLY LOGIC (Button + P)
 local flyKeys={W=false,A=false,S=false,D=false,Space=false,Shift=false}
-flyBtn.MouseButton1Click:Connect(function()
+local function toggleFly()
 	flyEnabled = not flyEnabled
 	flyBtn.Text = flyEnabled and "FLY : ON" or "FLY : OFF"
 	local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 	if flyEnabled then
-		flyBV=Instance.new("BodyVelocity",hrp)
-		flyBV.MaxForce=Vector3.new(1e9,1e9,1e9)
-		flyBG=Instance.new("BodyGyro",hrp)
-		flyBG.MaxTorque=Vector3.new(1e9,1e9,1e9)
+		flyBV = Instance.new("BodyVelocity", hrp)
+		flyBV.MaxForce = Vector3.new(1e9,1e9,1e9)
+		flyBG = Instance.new("BodyGyro", hrp)
+		flyBG.MaxTorque = Vector3.new(1e9,1e9,1e9)
 	else
 		safeDestroy(flyBV)
 		safeDestroy(flyBG)
 	end
+end
+
+flyBtn.MouseButton1Click:Connect(toggleFly)
+
+UIS.InputBegan:Connect(function(i, gp)
+	if gp then return end
+	if i.UserInputType == Enum.UserInputType.Keyboard then
+		-- Toggle Fly with P
+		if i.KeyCode == Enum.KeyCode.P then
+			toggleFly()
+		end
+		-- Flight movement keys
+		if flyKeys[i.KeyCode.Name] ~= nil then flyKeys[i.KeyCode.Name] = true end
+	end
 end)
 
-UIS.InputBegan:Connect(function(i,gp)
-	if gp then return end
-	if flyKeys[i.KeyCode.Name]~=nil then flyKeys[i.KeyCode.Name]=true end
-end)
 UIS.InputEnded:Connect(function(i)
-	if flyKeys[i.KeyCode.Name]~=nil then flyKeys[i.KeyCode.Name]=false end
+	if flyKeys[i.KeyCode.Name] ~= nil then flyKeys[i.KeyCode.Name] = false end
 end)
 
 RunService.RenderStepped:Connect(function()
